@@ -1,0 +1,291 @@
+(typedef uint8_t  uchar)
+(typedef uint32_t ulong)
+(typedef size_t uint)
+
+;; 0MQ errors.
+
+(extern int
+  zmq_errno)
+
+(extern (* (const char))
+  zmq_strerror
+  (errnum int))
+
+(extern void
+  zmq_version
+  (major (* int))
+  (minor (* int))
+  (patch (* int)))
+
+
+;; 0MQ infrastructure (a.k.a. context) initialisation & termination.
+
+(extern (* void)
+  zmq_ctx_new)
+
+(extern int
+  zmq_ctx_term
+  (context (* void)))
+
+(extern int
+  zmq_ctx_shutdown
+  (context (* void)))
+
+(extern int
+  zmq_ctx_set
+  (context (* void))
+  (option_name int)
+  (option_value int))
+
+(extern int
+  zmq_ctx_get
+  (context (* void))
+  (option_name int))
+
+
+;; 0MQ message definition.
+
+(typedef zmq_msg_t
+  (struct zmq_msg_t
+    (_ uchar)))
+
+#|
+(callback void
+  zmq_free_fn
+  (data (* void))
+  (hint (* void)))
+
+(extern int
+  zmq_msg_init_data
+  (msg (* zmq_msg_t))
+  (data (* void))
+  (size size_t)
+  (ffn (* zmq_free_fn))
+  (hint (* void)))
+|#
+
+(extern int
+  zmq_msg_init
+  (msg (* zmq_msg_t)))
+
+(extern int
+  zmq_msg_init_size
+  (msg (* zmq_msg_t))
+  (size size_t))
+
+(extern int
+  zmq_msg_send
+  (msg (* zmq_msg_t))
+  (socket (* void))
+  (flags int))
+
+(extern int
+  zmq_msg_recv
+  (msg (* zmq_msg_t))
+  (socket (* void))
+  (flags int))
+
+(extern int
+  zmq_msg_close
+  (msg (* zmq_msg_t)))
+
+(extern int
+  zmq_msg_move
+  (dest (* zmq_msg_t))
+  (src (* zmq_msg_t)))
+
+(extern int
+  zmq_msg_copy
+  (dest (* zmq_msg_t))
+  (src (* zmq_msg_t)))
+
+(extern (* void)
+  zmq_msg_data
+  (msg (* zmq_msg_t)))
+
+(extern int
+  zmq_msg_more
+  (msg (* zmq_msg_t)))
+
+(extern size_t
+  zmq_msg_size
+  (msg (* zmq_msg_t)))
+
+(extern int
+  zmq_msg_get
+  (msg (* zmq_msg_t))
+  (property int))
+
+(extern int
+  zmq_msg_set
+  (msg (* zmq_msg_t))
+  (property int)
+  (value int))
+
+(extern (* (const char))
+  zmq_msg_gets
+  (msg (* zmq_msg_t))
+  (property (* (const char))))
+
+
+;; 0MQ socket events and monitoring
+
+(extern (* void)
+  zmq_socket
+  (ctx (* void))
+  (type int))
+
+(extern int
+  zmq_close
+  (s (* void)))
+
+(extern int
+  zmq_setsockopt
+  (s (* void))
+  (option int)
+  (optval (* (const void)))
+  (optvallen size_t))
+
+(extern int
+  zmq_getsockopt
+  (s (* void))
+  (option int)
+  (optval (* void))
+  (optvallen (* size_t)))
+
+(extern int
+  zmq_bind
+  (s (* void))
+  (addr (* (const char))))
+
+(extern int
+  zmq_connect
+  (s (* void))
+  (addr (* (const char))))
+
+(extern int
+  zmq_unbind
+  (s (* void))
+  (addr (* (const char))))
+
+(extern int
+  zmq_disconnect
+  (s (* void))
+  (addr (* (const char))))
+
+(extern int
+  zmq_send
+  (s (* void))
+  (buf (* void))
+  (len size_t)
+  (flags int))
+
+(extern int
+  zmq_send_const
+  (s (* void))
+  (buf (* void))
+  (len size_t)
+  (flags int))
+
+(extern int
+  zmq_recv
+  (s (* void))
+  (buf (* void))
+  (len size_t)
+  (flags int))
+
+(extern int
+  zmq_socket_monitor
+  (s (* void))
+  (addr (* char))
+  (events int))
+
+
+;; I/O Multiplexing.
+
+(typedef zmq_pollitem_t
+  (struct zmq_pollitem_t
+    (socket (* void))
+    (fd int)
+    (events short)
+    (revents short)))
+
+(extern int
+  zmq_poll
+  (items (* zmq_pollitem_t))
+  (nitems int)
+  (timeout long))
+
+
+;; Message proxying
+
+(extern int
+  zmq_proxy
+  (frontend (* void))
+  (backend (* void))
+  (capture (* void)))
+
+(extern int
+  zmq_proxy_steerable
+  (frontend (* void))
+  (backend (* void))
+  (capture (* void))
+  (control (* void)))
+
+
+;; Probe library capabilities
+
+(extern int
+  zmq_has
+  (capability (* (const char))))
+
+
+;; Encryption functions
+
+(extern (* char)
+  zmq_z85_encode
+  (dest (* char))
+  (data (* (const uint8_t)))
+  (size size_t))
+
+(extern (* uint8_t)
+  zmq_z85_decode
+  (dest (* uint8_t))
+  (string (* (const char))))
+
+(extern int
+  zmq_curve_keypair
+  (z85_public_key (* char))
+  (z85_secret_key (* char)))
+
+(extern int
+  zmq_curve_public
+  (z85_public_key (* char))
+  (z85_secret_key (* (const char))))
+
+
+;; Atomic utility methods
+
+(extern (* void)
+  zmq_atomic_counter_new)
+
+(extern void
+  zmq_atomic_counter_set
+  (counter (* void))
+  (value int))
+
+(extern int
+  zmq_atomic_counter_inc
+  (counter (* void)))
+
+(extern int
+  zmq_atomic_counter_dec
+  (counter (* void)))
+
+(extern int
+  zmq_atomic_counter_value
+  (counter (* void)))
+
+(extern void
+  zmq_atomic_counter_destroy
+  (counter_p (* (* void))))
