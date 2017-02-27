@@ -8,12 +8,24 @@
         message))))
 
 (define (zmq-message-send message socket #!optional flags)
-  (if (= -1 (c-call "zmq_msg_send" message socket (get-zmq-flags flags)))
-    (error "could not send message" (get-zmq-error-string))))
+  (let ((ret (c-call "zmq_msg_send" message socket (get-zmq-flags flags))))
+    (if (= -1 ret)
+      (error "could not send message" (get-zmq-error-string))
+      ret)))
 
 (define (zmq-message-receive message socket #!optional flags)
-  (if (= -1 (c-call "zmq_msg_recv" message socket (get-zmq-flags flags)))
-    (error "could not receive message" (get-zmq-error-string))))
+  (let ((ret (c-call "zmq_msg_recv" message socket (get-zmq-flags flags))))
+    (if (= -1 ret)
+      (error "could not receive message" (get-zmq-error-string))
+      ret)))
+
+(define (zmq-message-init-size message size)
+  (if (= -1 (c-call "zmq_msg_init_size" message size))
+    (error "could not init size message" (get-zmq-error-string))))
+
+(define (zmq-message-init message)
+  (if (= -1 (c-call "zmq_msg_init" message))
+    (error "could not init message" (get-zmq-error-string))))
 
 (define (zmq-message-close message)
   (if (= -1 (c-call "zmq_msg_close" message))
@@ -28,7 +40,7 @@
     (error "could not copy message" (get-zmq-error-string))))
 
 (define (zmq-message-data message)
-  (c-call "zmq_msg_data" message))
+  (c-call "zmq_msg_data" null-alien message))
 
 (define (zmq-message-more? message)
   (= 1 (c-call "zmq_msg_more" message)))

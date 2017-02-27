@@ -1,8 +1,4 @@
 (define zmq-group-max-length 15)
-(define zmq-pollin 1)
-(define zmq-pollout 2)
-(define zmq-pollerr 4)
-(define zmq-pollpri 8)
 
 (define ((zmq-ref table) property)
   (let ((entry (assq property table)))
@@ -19,9 +15,10 @@
 (define (get-zmq-error-string)
   (c-peek-cstring (c-call "zmq_strerror" null-alien (get-zmq-error))))
 
-;; I/O
-(define (zmq-poll items nitems timeout)
-  (c-call "zmq_poll" items nitems timeout))
+(define (make-zmq-size value)
+  (let ((size (malloc 4 'size_t)))
+    (c->= size "uint" value)
+    size))
 
 ;; Proxy
 (define (zmq-proxy frontend backend capture)
@@ -66,9 +63,8 @@
 (define (zmq-atomic-counter-destroy! counter_p)
   (c-call "zmq_atomic_counter_destroy" counter_p))
 
-(define zmq-flags
-  '((dontwait 1)
-    (sndmore 2)))
+(define (make-zmq-poll-event events)
+  (fold-left + 0 (map (zmq-ref zmq-poll-events) events)))
 
 (define zmq-security-mechanisms
   '((zmq-null 0)

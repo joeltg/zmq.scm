@@ -1,14 +1,7 @@
 ;; Sockets
 
-(define (get-zmq-socket-events events)
-  (cond
-    ((default-object? events) 0)
-    ((number? events) events)
-    ((list? events) (fold-left + 0 (map (zmq-ref zmq-socket-events) events)))
-    (else (error "invalid socket event" events))))
-
 (define (make-zmq-socket context type)
-  (let ((socket (c-call "zmq_socket" context ((symbol-ref zmq-socket-types) type))))
+  (let ((socket (c-call "zmq_socket" null-alien context ((zmq-ref zmq-socket-types) type))))
     (if (alien-null? socket)
       (error "could not make socket" (get-zmq-error-string))
       socket)))
@@ -22,7 +15,7 @@
     (= -1
       (c-call "zmq_getsockopt"
         socket
-        ((symbol-ref zmq-socket-options) option)
+        ((zmq-ref zmq-socket-options) option)
         value
         length))
     (error "could not get socket option" (get-zmq-error-string))))
@@ -32,7 +25,7 @@
     (= -1
       (c-call "zmq_setsockopt"
         socket
-        ((symbol-ref zmq-socket-options) option)
+        ((zmq-ref zmq-socket-options) option)
         value
         length))
     (error "could not set socket option" (get-zmq-error-string))))
@@ -68,6 +61,13 @@
 (define (zmq-socket-monitor socket address events)
   (if (= -1 (c-call "zmq_socket_monitor" socket address (get-zmq-socket-events events)))
     (error "could not monitor socket" (get-zmq-error-string))))
+
+(define (get-zmq-socket-events events)
+  (cond
+    ((default-object? events) 0)
+    ((number? events) events)
+    ((list? events) (fold-left + 0 (map (zmq-ref zmq-socket-events) events)))
+    (else (error "invalid socket event" events))))
 
 (define zmq-socket-types
   '((pair   0)
