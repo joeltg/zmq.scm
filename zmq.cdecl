@@ -65,6 +65,14 @@
 |#
 
 (extern int
+  zmq_msg_init_data
+  (msg (* zmq_msg_t))
+  (data (* void))
+  (size size_t)
+  (ffn (* void))
+  (hint (* void)))
+
+(extern int
   zmq_msg_init
   (msg (* zmq_msg_t)))
 
@@ -265,7 +273,7 @@
 
 
 ;; Atomic utility methods
-
+#|
 (extern (* void)
   zmq_atomic_counter_new)
 
@@ -289,3 +297,4 @@
 (extern void
   zmq_atomic_counter_destroy
   (counter_p (* (* void))))
+|#

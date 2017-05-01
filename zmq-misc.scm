@@ -1,5 +1,10 @@
 (define zmq-group-max-length 15)
 
+(define (make-pointer alien)
+  (let ((pointer (malloc 8 '(* void))))
+    (c-poke-pointer pointer alien)
+    pointer))
+
 (define ((zmq-ref table) property)
   (let ((entry (assq property table)))
     (if entry (cadr entry) (error "invalid property" property))))
@@ -13,11 +18,11 @@
   (c-call "zmq_errno"))
 
 (define (get-zmq-error-string)
-  (c-peek-cstring (c-call "zmq_strerror" null-alien (get-zmq-error))))
+  (c-peek-cstring (c-call "zmq_strerror" (malloc 8 '(* (const char)))  (get-zmq-error))))
 
 (define (make-zmq-size value)
   (let ((size (malloc 4 'size_t)))
-    (c->= size "uint" value)
+    (c->= size "size_t" value)
     size))
 
 ;; Proxy
@@ -45,8 +50,9 @@
   (c-call "zmq_curve_public" public secret))
 
 ; Atomic
+#|
 (define (make-zmq-atomic-counter)
-  (c-call "zmq_atomic_counter_new" null-alien))
+  (c-call "zmq_atomic_counter_new" (malloc 8 '(* void))))
 
 (define (zmq-atomic-counter-set! counter value)
   (c-call "zmq_atomic_counter_set" counter value))
@@ -62,6 +68,7 @@
 
 (define (zmq-atomic-counter-destroy! counter_p)
   (c-call "zmq_atomic_counter_destroy" counter_p))
+|#
 
 (define (make-zmq-poll-event events)
   (fold-left + 0 (map (zmq-ref zmq-poll-events) events)))

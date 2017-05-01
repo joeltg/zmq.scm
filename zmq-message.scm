@@ -1,11 +1,31 @@
 ;; Messages
 
-(define (make-zmq-message #!optional size)
-  (let ((message (make-alien 'zmq_msg_t)) (init (default-object? size)))
-    (let ((ret (if init (c-call "zmq_msg_init" message) (c-call "zmq_msg_init_size" message size))))
-      (if (or (alien-null? message) (= -1 ret))
-        (error "could not initialize message" (get-zmq-error-string))
-        message))))
+(define zmq-message-size (c-sizeof "zmq_msg_t"))
+
+(define (zmq-buffer-size data)
+  (vector-8b-length data))
+
+(define (make-zmq-buffer data)
+  (let ((len (zmq-buffer-size data)))
+    (let ((buf (malloc len 'char)))
+      (let iter ((k 0) (elm (copy-alien buf)))
+	(if (< k len)
+	    (let ((char (vector-8b-ref data k)))
+	      (c->= elm "char" char)
+	      (alien-byte-increment! elm 1 'char)
+	      (iter (+ k 1) elm))
+	    buf)))))
+
+(define (parse-zmq-buffer buf len ret)
+  (if (> ret len) (warn "message truncated"))
+  (let ((data (make-string (min len ret))))
+    (let iter ((k 0) (elm buf))
+      (if (< k (min len ret))
+	  (let ((char (c-> elm "char")))
+	    (vector-8b-set! data k char)
+	    (alien-byte-increment! elm 1 'char)
+	    (iter (+ k 1) elm))
+	  data))))
 
 (define (zmq-message-send message socket #!optional flags)
   (let ((ret (c-call "zmq_msg_send" message socket (get-zmq-flags flags))))
@@ -18,6 +38,10 @@
     (if (= -1 ret)
       (error "could not receive message" (get-zmq-error-string))
       ret)))
+
+(define (zmq-message-init-data message data size)
+  (if (= -1 (c-call "zmq_msg_init_data" message data size null-alien null-alien))
+      (error "could not init data message" (get-zmq-error-string))))
 
 (define (zmq-message-init-size message size)
   (if (= -1 (c-call "zmq_msg_init_size" message size))
@@ -40,7 +64,7 @@
     (error "could not copy message" (get-zmq-error-string))))
 
 (define (zmq-message-data message)
-  (c-call "zmq_msg_data" null-alien message))
+  (c-call "zmq_msg_data" (malloc 8 '(* void)) message))
 
 (define (zmq-message-more? message)
   (= 1 (c-call "zmq_msg_more" message)))
